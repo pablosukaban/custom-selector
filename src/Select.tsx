@@ -1,44 +1,55 @@
 import React, { useEffect, useState } from 'react';
 import { X, CaretDown } from 'phosphor-react';
 
-type SelectOption = {
+export type SelectOption = {
     label: string;
     value: string | number;
 };
 
-interface MultipleSelectProps {
+type MultipleSelectProps = {
     multiple: true;
     value: SelectOption[];
     onChange: (value: SelectOption[]) => void;
-}
+};
 
-interface SingleSelectProps {
+type SingleSelectProps = {
     multiple?: false;
     value?: SelectOption;
     onChange: (value: SelectOption | undefined) => void;
-}
+};
 
-interface SelectProps {
+type SelectProps = {
     options: SelectOption[];
-    value?: SelectOption;
-    onChange: (value: SelectOption | undefined) => void;
-}
+} & (SingleSelectProps | MultipleSelectProps);
 
-const Select: React.FC<SelectProps> = ({ options, value, onChange }) => {
+const Select: React.FC<SelectProps> = ({
+    multiple,
+    options,
+    value,
+    onChange,
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(0);
 
     const clearOptions = (e: React.MouseEvent) => {
         e.stopPropagation();
-        onChange(undefined);
+        multiple ? onChange([]) : onChange(undefined);
     };
 
     const selectOption = (option: SelectOption) => {
-        if (option !== value) onChange(option);
+        if (multiple) {
+            if (value.includes(option)) {
+                onChange(value.filter((opt) => opt !== option));
+            } else {
+                onChange([...value, option]);
+            }
+        } else {
+            if (option !== value) onChange(option);
+        }
     };
 
     const isOptionSelected = (option: SelectOption) => {
-        return option === value;
+        return multiple ? value.includes(option) : option === value;
     };
 
     useEffect(() => {
@@ -54,7 +65,28 @@ const Select: React.FC<SelectProps> = ({ options, value, onChange }) => {
                 'relative w-[20em] min-h-[42px] border rounded border-primary flex items-center gap-2 p-2 focus:border-blue-400'
             }
         >
-            <span className={'flex-grow '}>{value?.label}</span>
+            <span className={'flex-grow flex flex-wrap gap-1'}>
+                {multiple
+                    ? value.map((item) => (
+                          <button
+                              onClick={(e) => {
+                                  e.stopPropagation();
+                                  selectOption(item);
+                              }}
+                              key={item.value}
+                              className={
+                                  'flex justify-center items-center border border-primary hover:bg-lightRed hover:border-normalRed focus:bg-lightRed focus:border-normalRed rounded gap-2 px-1 py-1'
+                              }
+                          >
+                              <span>{item.label}</span>
+
+                              <span>
+                                  <X size={14} weight="fill" />
+                              </span>
+                          </button>
+                      ))
+                    : value?.label}
+            </span>
             <button
                 onClick={clearOptions}
                 className={
