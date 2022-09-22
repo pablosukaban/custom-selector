@@ -3,10 +3,14 @@
 @tailwind utilities;
 
 .selected {
-    background-color: hsl(200, 100%, 70%);
+    background-color: hsl(200, 100%, 80%);
 }
 
 .highlighted {
     background-color: hsl(200, 100%, 50%);
     color: white;
+}
+
+.shown {
+    display: block;
 }
