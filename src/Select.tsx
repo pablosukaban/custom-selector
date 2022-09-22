@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { X, CaretDown } from 'phosphor-react';
 
 export type SelectOption = {
@@ -30,6 +30,7 @@ const Select: React.FC<SelectProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [highlightedIndex, setHighlightedIndex] = useState(0);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const clearOptions = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -56,8 +57,55 @@ const Select: React.FC<SelectProps> = ({
         if (isOpen) setHighlightedIndex(0);
     }, [isOpen]);
 
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.target !== containerRef.current) return;
+
+            const newValue =
+                highlightedIndex + (e.code === 'ArrowDown' ? 1 : -1);
+
+            switch (e.code) {
+                case 'Space':
+                case 'Enter':
+                    setIsOpen((prev) => !prev);
+                    if (isOpen) selectOption(options[highlightedIndex]);
+                    break;
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    if (!isOpen) {
+                        setIsOpen(true);
+                        break;
+                    }
+                    // if (newValue >= 0 && newValue < options.length) {
+                    //     setHighlightedIndex(newValue);
+                    // }
+                    // if (newValue < 0) setHighlightedIndex(options.length - 1);
+                    // if (newValue >= options.length) setHighlightedIndex(0);
+
+                    if (newValue < 0) {
+                        setHighlightedIndex(options.length - 1);
+                    } else if (newValue >= options.length) {
+                        setHighlightedIndex(0);
+                    } else {
+                        setHighlightedIndex(newValue);
+                    }
+
+                    break;
+                case 'Escape':
+                    setIsOpen(false);
+                    break;
+            }
+        };
+
+        containerRef.current?.addEventListener('keydown', handler);
+
+        return () =>
+            containerRef.current?.removeEventListener('keydown', handler);
+    }, [isOpen, highlightedIndex, options]);
+
     return (
         <div
+            ref={containerRef}
             onClick={() => setIsOpen((prev) => !prev)}
             onBlur={() => setIsOpen(false)}
             tabIndex={0}
